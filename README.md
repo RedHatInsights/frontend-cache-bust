@@ -27,3 +27,4 @@ client_token = DEADBEEFDEADBEEFDEADBEEF
 ```
 
 You can set up creds via directions in this article https://techdocs.akamai.com/developer/docs/set-up-authentication-credentials
+

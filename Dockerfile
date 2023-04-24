@@ -1,3 +1,4 @@
+# Frontend Cachge Bust Dockerfile
 FROM registry.access.redhat.com/ubi8/go-toolset:1.18.9-13 as builder
 
 USER 0
