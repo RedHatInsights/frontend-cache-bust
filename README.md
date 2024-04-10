@@ -1,4 +1,4 @@
-# Frontend Cache Bust
+# Frontend Cache Buster
 This was inspired by https://github.com/akamai/akamai-docker/blob/master/dockerfiles/purge.Dockerfile
 but modified to run in a Red Hat environment 
 
