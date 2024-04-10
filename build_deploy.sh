@@ -1,12 +1,5 @@
 #!/bin/bash
 
-# --------------------------------------------
-# Export vars for helper scripts to use
-# --------------------------------------------
-export WORKSPACE=${WORKSPACE:-$APP_ROOT} # if running in jenkins, use the build's workspace
-export APP_ROOT=$(pwd)
-export IMAGE="quay.io/cloudservices/frontend-cache-bust"
-export IMAGE_TAG=$(git rev-parse --short=7 HEAD)
 
 set -exv
 
@@ -20,17 +13,32 @@ if [[ -z "$RH_REGISTRY_USER" || -z "$RH_REGISTRY_TOKEN" ]]; then
     exit 1
 fi
 
-DOCKER_CONF="$PWD/.docker"
-mkdir -p "$DOCKER_CONF"
-docker --config="$DOCKER_CONF" login -u="$QUAY_USER" -p="$QUAY_TOKEN" quay.io
-docker --config="$DOCKER_CONF" login -u="$RH_REGISTRY_USER" -p="$RH_REGISTRY_TOKEN" registry.redhat.io
-docker --config="$DOCKER_CONF" build -t "${IMAGE}:${IMAGE_TAG}" "$APP_ROOT" -f "$APP_ROOT/Dockerfile"
-docker --config="$DOCKER_CONF" push "${IMAGE}:${IMAGE_TAG}"
+function cleanup() {
 
-# Stubbed out for now
-mkdir -p "$WORKSPACE/artifacts"
-cat << EOF > "$WORKSPACE/artifacts/junit-dummy.xml"
-<testsuite tests="1">
-    <testcase classname="dummy" name="dummytest"/>
-</testsuite>
-EOF
+    if [[ -z "$TEARDOWN_RAN" ]]; then
+        rm -fr "$TMP_JOB_DIR"
+        TEARDOWN_RAN='yes'
+    fi
+}
+TEARDOWN_RAN=''
+PR_CHECK_BUILD=${PR_CHECK_BUILD:-}
+IMAGE="quay.io/cloudservices/frontend-cache-bust"
+TMP_DIR=$(mktemp -d -p "$HOME" -t "jenkins-${JOB_NAME}-${BUILD_NUMBER}-XXXXXX")
+DOCKER_CONFIG="${TMP_DIR}/.docker"
+mkdir "$DOCKER_CONFIG"
+export DOCKER_CONFIG
+
+trap cleanup EXIT ERR SIGINT SIGTERM
+
+docker login -u="$QUAY_USER" --password-stdin quay.io <<< "$QUAY_TOKEN" 
+docker login -u="$RH_REGISTRY_USER" --password-stdin registry.redhat.io <<< "$RH_REGISTRY_TOKEN"
+
+if [[ -z "$PR_CHECK_BUILD" ]]; then
+    IMAGE_TAG="pr-${ghprbPullId}-$(git rev-parse --short=7 HEAD)"
+    docker build -t "${IMAGE}:${IMAGE_TAG}" --label 'quay.expires-after=3d' .
+else
+    IMAGE_TAG=$(git rev-parse --short=7 HEAD)
+    docker build -t "${IMAGE}:${IMAGE_TAG}" .
+fi
+
+docker push "${IMAGE}:${IMAGE_TAG}"
