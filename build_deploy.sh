@@ -34,11 +34,11 @@ docker login -u="$QUAY_USER" --password-stdin quay.io <<< "$QUAY_TOKEN"
 docker login -u="$RH_REGISTRY_USER" --password-stdin registry.redhat.io <<< "$RH_REGISTRY_TOKEN"
 
 if [[ -z "$PR_CHECK_BUILD" ]]; then
-    IMAGE_TAG="pr-${ghprbPullId}-$(git rev-parse --short=7 HEAD)"
-    docker build -t "${IMAGE}:${IMAGE_TAG}" --label 'quay.expires-after=3d' .
-else
     IMAGE_TAG=$(git rev-parse --short=7 HEAD)
     docker build -t "${IMAGE}:${IMAGE_TAG}" .
+else
+    IMAGE_TAG="pr-${ghprbPullId}-$(git rev-parse --short=7 HEAD)"
+    docker build -t "${IMAGE}:${IMAGE_TAG}" --label 'quay.expires-after=3d' .
 fi
 
 docker push "${IMAGE}:${IMAGE_TAG}"
