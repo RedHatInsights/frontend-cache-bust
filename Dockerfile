@@ -9,4 +9,4 @@ FROM registry.access.redhat.com/ubi8-minimal:8.9-1161
 COPY --from=builder /opt/app-root/src/cli-purge/cli.json .
 COPY --from=builder /opt/app-root/src/cli-purge/akamai-purge .
 
-ENTRYPOINT ["/akamai-purge"]
+ENTRYPOINT ["sh", "-c", "sleep 60 && /akamai-purge"]
