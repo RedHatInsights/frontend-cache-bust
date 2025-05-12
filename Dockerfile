@@ -1,5 +1,5 @@
 # Frontend Cachge Bust Dockerfile
-FROM registry.access.redhat.com/ubi8/go-toolset:1.22.9-1 as builder
+FROM registry.access.redhat.com/ubi8/go-toolset:1.23.6-2 as builder
 
 RUN git clone https://github.com/akamai/cli-purge 
 RUN cd cli-purge && go build -o akamai-purge -ldflags="-s -w"
